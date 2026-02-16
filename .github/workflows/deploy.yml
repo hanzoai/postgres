@@ -62,24 +62,3 @@ jobs:
             docker.io/hanzoai/sql:latest
             docker.io/hanzoai/sql:16-alpine
           cache-from: type=gha,scope=sql
-
-  deploy-hanzo:
-    needs: build
-    if: secrets.DIGITALOCEAN_ACCESS_TOKEN != ''
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Configure kubectl (hanzo-k8s)
-        run: doctl kubernetes cluster kubeconfig save do-sfo3-hanzo-k8s
-
-      - name: Rolling update postgres
-        run: |
-          kubectl -n hanzo set image statefulset/postgres \
-            postgres=ghcr.io/hanzoai/sql:latest
-          kubectl -n hanzo rollout status statefulset/postgres --timeout=120s
